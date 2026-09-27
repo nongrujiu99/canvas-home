@@ -43,7 +43,7 @@ export default function SignupPage() {
                             { type: "email", message: t("auth.signup.emailInvalid") },
                         ]}
                     >
-                        <Input size="large" placeholder={t("auth.signup.emailPlaceholder")} />
+                        <Input size="large" name="email" placeholder={t("auth.signup.emailPlaceholder")} />
                     </Form.Item>
 
                     <Form.Item
@@ -56,6 +56,7 @@ export default function SignupPage() {
                     >
                         <Input.Password
                             size="large"
+                            name="password"
                             placeholder={t("auth.signup.passwordPlaceholder")}
                         />
                     </Form.Item>
@@ -69,6 +70,7 @@ export default function SignupPage() {
                     >
                         <Input.Password
                             size="large"
+                            name="confirmPassword"
                             placeholder={t("auth.signup.confirmPasswordPlaceholder")}
                         />
                     </Form.Item>

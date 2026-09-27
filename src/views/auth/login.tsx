@@ -43,7 +43,7 @@ export default function LoginPage() {
                             { type: "email", message: t("auth.login.emailInvalid") },
                         ]}
                     >
-                        <Input size="large" placeholder={t("auth.login.emailPlaceholder")} />
+                        <Input size="large" name="email" placeholder={t("auth.login.emailPlaceholder")} />
                     </Form.Item>
 
                     <Form.Item
@@ -55,6 +55,7 @@ export default function LoginPage() {
                     >
                         <Input.Password
                             size="large"
+                            name="password"
                             placeholder={t("auth.login.passwordPlaceholder")}
                         />
                     </Form.Item>
