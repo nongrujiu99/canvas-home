@@ -71,7 +71,7 @@ export function CanvasSelectionToolbar({
  );
 }
 
-function SelectionAction({ title, label, icon, onClick, theme }: { title: string; label: string; icon: ReactNode; onClick: () => void; theme: typeof canvasThemes.light }) {
+function SelectionAction({ title, label, icon, onClick, theme }: { title: string; label: string; icon: ReactNode; onClick: () => void; theme: (typeof canvasThemes)[keyof typeof canvasThemes] }) {
  return (
  <Tooltip title={title} placement="top" mouseEnterDelay={0.2} color={theme.node.panel} styles={{ root: { color: theme.node.text, boxShadow: "0 8px 24px rgba(15,23,42,.16)", fontSize: 13, fontWeight: 500 } }}>
  <button type="button" className="group relative flex h-12 items-center whitespace-nowrap px-1.5 text-sm" onClick={onClick} aria-label={title}>

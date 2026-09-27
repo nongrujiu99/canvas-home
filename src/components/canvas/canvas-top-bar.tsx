@@ -163,7 +163,7 @@ function MenuLabel({ text, shortcut }: { text: string; shortcut: string }) {
  );
 }
 
-function Shortcut({ keys, value, theme }: { keys: string[]; value: string; theme: typeof canvasThemes.light }) {
+function Shortcut({ keys, value, theme }: { keys: string[]; value: string; theme: (typeof canvasThemes)[keyof typeof canvasThemes] }) {
  return (
  <div className="grid grid-cols-[minmax(0,1fr)_120px] items-center gap-6 rounded-lg px-1 py-1.5">
  <span className="flex min-w-0 flex-wrap items-center gap-1.5">
