@@ -1,5 +1,3 @@
-"use client";
-
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 import Script from "next/script";
@@ -10,10 +8,6 @@ import "@/styles/globals.css";
 import { AppProviders } from "@/components/layout/app-providers";
 import UserLayout from "@/layouts/user-layout";
 import { AnalyticsTracker } from "@/components/layout/analytics-tracker";
-import "@/i18n";
-import { initAnalytics } from "@/lib/analytics";
-
-initAnalytics();
 
 export default function RootLayout({ children }: { children: ReactNode }) {
     return (

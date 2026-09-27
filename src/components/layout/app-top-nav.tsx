@@ -1,3 +1,5 @@
+"use client";
+
 import { Menu } from "lucide-react";
 import { Button, Tooltip } from "antd";
 import NextLink from "next/link";

@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -10,8 +12,12 @@ import { useTranslation } from "react-i18next";
 
 import { ClientRootInit } from "@/components/layout/client-root-init";
 import type { AppLocale } from "@/i18n";
+import "@/i18n";
+import { initAnalytics } from "@/lib/analytics";
 import { getAntThemeConfig } from "@/lib/app-theme";
 import { useThemeStore } from "@/stores/use-theme-store";
+
+initAnalytics();
 
 const queryClient = new QueryClient({
  defaultOptions: {

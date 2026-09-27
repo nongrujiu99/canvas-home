@@ -1,3 +1,5 @@
+"use client";
+
 import { Home } from "lucide-react";
 import NextLink from "next/link";
 import { useTranslation } from "react-i18next";

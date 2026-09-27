@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 
 import { AppTopNav } from "@/components/layout/app-top-nav";
