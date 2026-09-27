@@ -1,6 +1,7 @@
 import { Menu } from "lucide-react";
 import { Button, Tooltip } from "antd";
-import { Link, useLocation } from "react-router-dom";
+import NextLink from "next/link";
+import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
 import { navigationTools, type NavigationToolSlug } from "@/constant/navigation-tools";
@@ -12,7 +13,7 @@ import { useState } from "react";
 
 export function AppTopNav() {
  const { t } = useTranslation();
- const { pathname } = useLocation();
+ const pathname = usePathname();
  const [mobileNavOpen, setMobileNavOpen] = useState(false);
  const hideHeader = /^\/canvas\/[^/]+/.test(pathname);
  const slug = pathname.split("/").filter(Boolean)[0];
@@ -24,7 +25,7 @@ export function AppTopNav() {
  <header className="sticky top-0 z-20 h-15 shrink-0 border-b border-border bg-background/92 backdrop-blur-xl">
  <div className="mx-auto flex h-full max-w-7xl items-stretch justify-between gap-5 px-5 sm:px-8">
  <div className="flex min-w-0 items-center">
- <Link to="/" className="flex h-full shrink-0 items-center gap-2.5 text-sm font-semibold leading-none tracking-tight text-foreground transition hover:text-primary">
+ <NextLink href="/" className="flex h-full shrink-0 items-center gap-2.5 text-sm font-semibold leading-none tracking-tight text-foreground transition hover:text-primary">
  <span
  className="size-5 shrink-0 bg-primary"
  style={{
@@ -33,7 +34,7 @@ export function AppTopNav() {
  }}
  />
  <span className="text-base font-semibold tracking-[-0.015em]">{t("meta.title")}</span>
- </Link>
+ </NextLink>
 
  <button
  type="button"
@@ -50,9 +51,9 @@ export function AppTopNav() {
  const Icon = tool.icon;
  const active = tool.slug === activeToolSlug;
  return (
- <Link
+ <NextLink
  key={tool.slug}
- to={`/${tool.slug}`}
+ href={`/${tool.slug}`}
  className={cn(
  "relative flex h-15 shrink-0 items-center gap-2 text-sm leading-6 transition after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full",
  active ? "font-semibold text-foreground after:bg-primary" : "text-muted-foreground after:bg-transparent hover:text-foreground",
@@ -60,7 +61,7 @@ export function AppTopNav() {
  >
  <Icon className="size-4" />
  <span className="truncate">{t(`navigation.${tool.slug}`)}</span>
- </Link>
+ </NextLink>
  );
  })}
  </nav>

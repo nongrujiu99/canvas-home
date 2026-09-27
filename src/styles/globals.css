@@ -141,6 +141,7 @@
         @apply bg-background text-foreground;
         -webkit-font-smoothing: antialiased;
         text-rendering: optimizeLegibility;
+        font-family: "SF Pro Display", "SF Pro Text", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
     }
     ::selection {
         background: color-mix(in srgb, var(--primary) 28%, transparent);

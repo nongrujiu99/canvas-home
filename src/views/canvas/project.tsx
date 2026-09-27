@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent as ReactChangeEvent, DragEvent as ReactDragEvent, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Group, Video } from "lucide-react";
 import { saveAs } from "file-saver";
 import { useTranslation } from "react-i18next";
@@ -212,8 +212,8 @@ function InfiniteCanvasPage() {
  const { message, modal } = App.useApp();
  const { t } = useTranslation();
  const params = useParams<{ id: string }>();
- const navigate = useNavigate();
- const [searchParams] = useSearchParams();
+ const router = useRouter();
+ const searchParams = useSearchParams();
  const projectId = params.id || "";
  const containerRef = useRef<HTMLDivElement>(null);
  const imageInputRef = useRef<HTMLInputElement>(null);
@@ -472,7 +472,7 @@ function InfiniteCanvasPage() {
  setProjectLoaded(false);
  const project = openProject(projectId);
  if (!project) {
- navigate("/canvas", { replace: true });
+ router.replace("/canvas");
  return;
  }
 
@@ -499,7 +499,7 @@ function InfiniteCanvasPage() {
  setProjectLoaded(true);
  };
  void restore();
- }, [hydrated, navigate, openProject, projectId]);
+ }, [hydrated, router, openProject, projectId]);
 
  useEffect(() => {
  if (!projectLoaded) return;
@@ -1189,14 +1189,14 @@ function InfiniteCanvasPage() {
 
  const createAndOpenProject = useCallback(() => {
  const id = createProject(t("canvas.defaultTitle", { count: useCanvasStore.getState().projects.length + 1 }));
- navigate(`/canvas/${id}`);
- }, [createProject, navigate, t]);
+ router.push(`/canvas/${id}`);
+ }, [createProject, router, t]);
 
  const deleteCurrentProject = useCallback(() => {
  deleteProjects([projectId]);
  cleanupAssetImages();
- navigate("/canvas");
- }, [cleanupAssetImages, deleteProjects, navigate, projectId]);
+ router.push("/canvas");
+ }, [cleanupAssetImages, deleteProjects, router, projectId]);
 
  const exportCurrentProject = useCallback(async () => {
  const project = useCanvasStore.getState().projects.find((item) => item.id === projectId);
@@ -3299,8 +3299,8 @@ function InfiniteCanvasPage() {
  onCancelTitleEditing={() => setTitleEditing(false)}
  canUndo={historyState.canUndo}
  canRedo={historyState.canRedo}
- onHome={() => navigate("/")}
- onProjects={() => navigate("/canvas")}
+ onHome={() => router.push("/")}
+ onProjects={() => router.push("/canvas")}
  onCreateProject={createAndOpenProject}
  onDeleteProject={deleteCurrentProject}
  onExportProject={exportCurrentProject}

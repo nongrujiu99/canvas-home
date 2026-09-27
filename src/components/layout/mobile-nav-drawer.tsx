@@ -1,5 +1,5 @@
 import { Drawer } from "antd";
-import { Link } from "react-router-dom";
+import NextLink from "next/link";
 import { useTranslation } from "react-i18next";
 
 import { navigationTools, type NavigationToolSlug } from "@/constant/navigation-tools";
@@ -21,9 +21,9 @@ export function MobileNavDrawer({ open, activeToolSlug, onClose }: MobileNavDraw
  const Icon = tool.icon;
  const active = tool.slug === activeToolSlug;
  return (
- <Link
+ <NextLink
  key={tool.slug}
- to={`/${tool.slug}`}
+ href={`/${tool.slug}`}
  onClick={onClose}
  className={cn(
  "flex items-center gap-3 rounded-lg px-3 py-3 text-base transition",
@@ -32,7 +32,7 @@ export function MobileNavDrawer({ open, activeToolSlug, onClose }: MobileNavDraw
  >
  <Icon className="size-5" />
  <span>{t(`navigation.${tool.slug}`)}</span>
- </Link>
+ </NextLink>
  );
  })}
  </div>

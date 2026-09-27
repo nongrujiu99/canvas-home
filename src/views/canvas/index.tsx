@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { App, Button } from "antd";
 import { Download, Eye, FileUp, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -18,7 +18,7 @@ import { buildCanvasFeaturePreviewProject } from "@/lib/canvas/canvas-feature-pr
 export default function CanvasPage() {
  const { message } = App.useApp();
  const { t } = useTranslation();
- const navigate = useNavigate();
+ const router = useRouter();
  const inputRef = useRef<HTMLInputElement>(null);
  const hydrated = useCanvasStore((state) => state.hydrated);
  const projects = useCanvasStore((state) => state.projects);
@@ -27,11 +27,11 @@ export default function CanvasPage() {
  const selectedIds = useCanvasUiStore((state) => state.selectedProjectIds);
  const setDeleteIds = useCanvasUiStore((state) => state.setDeleteProjectIds);
 
- const enterProject = (id: string) => navigate(`/canvas/${id}`);
+ const enterProject = (id: string) => router.push(`/canvas/${id}`);
  const createAndEnter = () => enterProject(createProject(t("canvas.defaultTitle", { count: projects.length + 1 })));
  const openFeaturePreview = () => {
  const id = importProject(buildCanvasFeaturePreviewProject(t("canvas.featurePreview.title")));
- navigate(`/canvas/${id}?preview=1`);
+ router.push(`/canvas/${id}?preview=1`);
  };
  const importCanvas = async (file?: File) => {
  if (!file) return;

@@ -1,5 +1,5 @@
 import { Home } from "lucide-react";
-import { Link } from "react-router-dom";
+import NextLink from "next/link";
 import { useTranslation } from "react-i18next";
 
 export default function NotFound() {
@@ -12,10 +12,10 @@ export default function NotFound() {
  <h1 className="text-3xl font-semibold tracking-normal">{t("notFound.title")}</h1>
  <p className="mt-3 text-sm leading-6 text-muted-foreground">{t("notFound.description")}</p>
  <div className="mt-8 flex flex-wrap justify-center gap-3">
- <Link to="/" className="inline-flex h-10 items-center gap-2 rounded-lg bg-foreground text-background hover:opacity-90 ">
+ <NextLink href="/" className="inline-flex h-10 items-center gap-2 rounded-lg bg-foreground text-background hover:opacity-90 ">
  <Home className="size-4" />
  {t("notFound.home")}
- </Link>
+ </NextLink>
  </div>
  </section>
  </main>

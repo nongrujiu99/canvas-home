@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { App, Button, Image, Tag } from "antd";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
 import { fetchPrompts, type Prompt } from "@/services/api/prompts";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 export default function IndexPage() {
  const { message } = App.useApp();
  const { t } = useTranslation();
- const navigate = useNavigate();
+ const router = useRouter();
  const [primaryTool] = navigationTools;
  const [promptShowcase, setPromptShowcase] = useState<Prompt[]>([]);
  const [previewIndex, setPreviewIndex] = useState(0);
@@ -31,10 +31,10 @@ export default function IndexPage() {
  <h1 className="max-w-3xl text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">{t("meta.title")}</h1>
  <p className="mt-6 max-w-2xl text-balance text-base leading-7 text-muted-foreground sm:text-lg">{t("home.description")}</p>
  <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
- <Button type="primary" size="large" onClick={() => navigate(`/${primaryTool.slug}`)} icon={<ArrowRight className="size-4" />} iconPlacement="end">
+ <Button type="primary" size="large" onClick={() => router.push(`/${primaryTool.slug}`)} icon={<ArrowRight className="size-4" />} iconPlacement="end">
  {t("home.start")}
  </Button>
- <Button size="large" onClick={() => navigate("/canvas")}>
+ <Button size="large" onClick={() => router.push("/canvas")}>
  {t("home.openCanvas")}
  </Button>
  </div>
@@ -47,7 +47,7 @@ export default function IndexPage() {
  <h2 className="text-2xl font-semibold">{t("home.showcaseTitle")}</h2>
  <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("home.showcaseDescription")}</p>
  </div>
- <Button type="link" onClick={() => navigate("/prompts")} className="justify-self-center md:justify-self-end" icon={<ArrowRight className="size-4" />} iconPlacement="end">
+ <Button type="link" onClick={() => router.push("/prompts")} className="justify-self-center md:justify-self-end" icon={<ArrowRight className="size-4" />} iconPlacement="end">
  {t("home.viewPrompts")}
  </Button>
  </div>

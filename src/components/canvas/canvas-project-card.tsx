@@ -1,5 +1,5 @@
 import { Check, Download, Pencil, Trash2, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Button, Input } from "antd";
 import { useTranslation } from "react-i18next";
 
@@ -9,7 +9,7 @@ import { exportCanvasProjects } from "@/lib/canvas/canvas-export";
 
 export function CanvasProjectCard({ project }: { project: CanvasProject }) {
     const { i18n, t } = useTranslation();
-    const navigate = useNavigate();
+    const router = useRouter();
     const renameProject = useCanvasStore((state) => state.renameProject);
     const selectedIds = useCanvasUiStore((state) => state.selectedProjectIds);
     const editingId = useCanvasUiStore((state) => state.editingProjectId);
@@ -22,7 +22,7 @@ export function CanvasProjectCard({ project }: { project: CanvasProject }) {
     const editing = editingId === project.id;
     const selected = selectedIds.includes(project.id);
 
-    const open = () => navigate(`/canvas/${project.id}`);
+    const open = () => router.push(`/canvas/${project.id}`);
     const saveTitle = () => {
         renameProject(project.id, editingTitle);
         stopEditing();
