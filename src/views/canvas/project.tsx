@@ -44,7 +44,7 @@ import { CanvasToolbar } from "@/components/canvas/canvas-toolbar";
 import { AssetPickerModal, type InsertAssetPayload } from "@/components/canvas/asset-picker-modal";
 import { CanvasSidePanel } from "@/components/canvas/canvas-side-panel";
 import { CanvasZoomControls } from "@/components/canvas/canvas-zoom-controls";
-import { useCanvasStore } from "@/stores/canvas/use-canvas-store";
+import { useCanvasStore, type CanvasProject } from "@/stores/canvas/use-canvas-store";
 import { buildNodeMentionReferences, getGroupResourceNodes, isCanvasReferenceNode, type CanvasResourceReference } from "@/lib/canvas/canvas-resource-references";
 import { exportCanvasProjects } from "@/lib/canvas/canvas-export";
 import { applyNodeConfigPatch, audioMetadata, buildAudioGenerationMetadata, buildImageGenerationMetadata, createCanvasNode, imageMetadata, videoMetadata } from "@/lib/canvas/canvas-node-factory";
@@ -73,6 +73,7 @@ import { registerBuiltinNodes } from "@/components/canvas/nodes/builtin-nodes";
 import { CanvasRefreshShell } from "@/components/canvas/canvas-refresh-shell";
 import { CanvasTopBar } from "@/components/canvas/canvas-top-bar";
 import { ConnectionCreateMenu, type PendingConnectionCreate } from "@/components/canvas/canvas-create-menus";
+import { getCanvas, saveCanvas } from "@/app/actions/projects";
 import {
  CanvasNodeType,
  type CanvasConnection,
@@ -144,6 +145,14 @@ const NODE_STATUS_IDLE = "idle" as const;
 const NODE_STATUS_LOADING = "loading" as const;
 const NODE_STATUS_SUCCESS = "success" as const;
 const NODE_STATUS_ERROR = "error" as const;
+
+type CloudSaveStatus = "idle" | "loading" | "ready" | "unsaved" | "saving" | "saved" | "error";
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const CLOUD_SAVE_DELAY = 1500;
+
+function isUuid(value: string): boolean {
+ return UUID_RE.test(value);
+}
 
 function availableNodeCenterBelow(source: CanvasNodeData, width: number, height: number, nodes: CanvasNodeData[]): Position {
  const left = source.position.x + source.width / 2 - width / 2;
@@ -259,6 +268,7 @@ function InfiniteCanvasPage() {
  const hydrated = useCanvasStore((state) => state.hydrated);
  const createProject = useCanvasStore((state) => state.createProject);
  const openProject = useCanvasStore((state) => state.openProject);
+ const upsertProject = useCanvasStore((state) => state.upsertProject);
  const updateProject = useCanvasStore((state) => state.updateProject);
  const renameProject = useCanvasStore((state) => state.renameProject);
  const deleteProjects = useCanvasStore((state) => state.deleteProjects);
@@ -305,6 +315,13 @@ function InfiniteCanvasPage() {
  const [isNodeResizing, setIsNodeResizing] = useState(false);
  const [dropTargetGroupId, setDropTargetGroupId] = useState<string | null>(null);
  const [referencePickerNodeId, setReferencePickerNodeId] = useState<string | null>(null);
+ const [cloudSaveStatus, setCloudSaveStatus] = useState<CloudSaveStatus>("idle");
+ const [cloudLoadError, setCloudLoadError] = useState<string | null>(null);
+ const isCloudProjectRef = useRef(false);
+ const cloudSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ const cloudSaveInFlightRef = useRef(false);
+ const lastCloudSaveRef = useRef<{ nodes: CanvasNodeData[]; connections: CanvasConnection[]; backgroundMode: CanvasBackgroundMode; showImageInfo: boolean; viewport: ViewportTransform } | null>(null);
+ const cloudInitRef = useRef(false);
 
  const nodesRef = useRef(nodes);
  const connectionsRef = useRef(connections);
@@ -472,12 +489,14 @@ function InfiniteCanvasPage() {
  useEffect(() => {
  if (!hydrated) return;
  setProjectLoaded(false);
- const project = openProject(projectId);
- if (!project) {
- router.replace("/canvas");
- return;
- }
+ setCloudSaveStatus("loading");
+ setCloudLoadError(null);
+ cloudInitRef.current = false;
+ isCloudProjectRef.current = false;
 
+ const project = openProject(projectId);
+ if (project) {
+ isCloudProjectRef.current = isUuid(projectId);
  const restore = async () => {
  const restoredNodes = (await hydrateCanvasImages(resetInterruptedGeneration(project.nodes))).map((node) => node.type === CanvasNodeType.Config ? { ...node, width: Math.max(node.width, NODE_DEFAULT_SIZE[CanvasNodeType.Config].width), height: Math.max(node.height, NODE_DEFAULT_SIZE[CanvasNodeType.Config].height) } : node);
  const restoredConnections = normalizeCanvasConnections(restoredNodes, project.connections);
@@ -498,10 +517,75 @@ function InfiniteCanvasPage() {
  showImageInfo: project.showImageInfo || false,
  };
  setHistoryState({ canUndo: false, canRedo: false });
+ cloudInitRef.current = true;
  setProjectLoaded(true);
+ setCloudSaveStatus("saved");
  };
  void restore();
- }, [hydrated, router, openProject, projectId]);
+ return;
+ }
+
+ if (!isUuid(projectId)) {
+ router.replace("/canvas");
+ return;
+ }
+
+ const loadFromCloud = async () => {
+ setCloudSaveStatus("loading");
+ const result = await getCanvas(projectId);
+ if (result.error || !result.data) {
+ setCloudLoadError(result.error || "画布不存在");
+ setCloudSaveStatus("error");
+ return;
+ }
+
+ const canvasData = result.data.canvas_data as unknown as CanvasProject;
+ if (!canvasData || typeof canvasData !== "object" || !canvasData.id) {
+ setCloudLoadError("画布数据无效");
+ setCloudSaveStatus("error");
+ return;
+ }
+
+ const cloudProject: CanvasProject = {
+ id: canvasData.id || projectId,
+ title: canvasData.title || "Untitled",
+ createdAt: canvasData.createdAt || new Date().toISOString(),
+ updatedAt: canvasData.updatedAt || result.data.updated_at,
+ nodes: Array.isArray(canvasData.nodes) ? canvasData.nodes : [],
+ connections: Array.isArray(canvasData.connections) ? canvasData.connections : [],
+ backgroundMode: canvasData.backgroundMode || "lines",
+ showImageInfo: Boolean(canvasData.showImageInfo),
+ viewport: canvasData.viewport || { x: 0, y: 0, k: 1 },
+ };
+
+ upsertProject(cloudProject);
+
+ const restoredNodes = (await hydrateCanvasImages(resetInterruptedGeneration(cloudProject.nodes))).map((node) => node.type === CanvasNodeType.Config ? { ...node, width: Math.max(node.width, NODE_DEFAULT_SIZE[CanvasNodeType.Config].width), height: Math.max(node.height, NODE_DEFAULT_SIZE[CanvasNodeType.Config].height) } : node);
+ const restoredConnections = normalizeCanvasConnections(restoredNodes, cloudProject.connections);
+ setNodes(restoredNodes);
+ setConnections(restoredConnections);
+ setBackgroundMode(cloudProject.backgroundMode);
+ setShowImageInfo(cloudProject.showImageInfo || false);
+ setViewport(cloudProject.viewport);
+ historyRef.current = { past: [], future: [] };
+ if (historyCommitTimerRef.current) {
+ clearTimeout(historyCommitTimerRef.current);
+ historyCommitTimerRef.current = null;
+ }
+ lastHistoryRef.current = {
+ nodes: restoredNodes,
+ connections: restoredConnections,
+ backgroundMode: cloudProject.backgroundMode,
+ showImageInfo: cloudProject.showImageInfo || false,
+ };
+ setHistoryState({ canUndo: false, canRedo: false });
+ isCloudProjectRef.current = true;
+ cloudInitRef.current = true;
+ setProjectLoaded(true);
+ setCloudSaveStatus("saved");
+ };
+ void loadFromCloud();
+ }, [hydrated, router, openProject, upsertProject, projectId]);
 
  useEffect(() => {
  if (!projectLoaded) return;
@@ -558,6 +642,72 @@ function InfiniteCanvasPage() {
  if (viewportSaveTimerRef.current) clearTimeout(viewportSaveTimerRef.current);
  };
  }, [projectId, projectLoaded, updateProject, viewport]);
+
+ useEffect(() => {
+ if (!projectLoaded || !cloudInitRef.current || !isCloudProjectRef.current) return;
+
+ setCloudSaveStatus("unsaved");
+
+ if (cloudSaveTimerRef.current) clearTimeout(cloudSaveTimerRef.current);
+ cloudSaveTimerRef.current = setTimeout(() => {
+ const currentSnapshot = {
+ nodes: nodesRef.current,
+ connections: connectionsRef.current,
+ backgroundMode,
+ showImageInfo,
+ viewport: viewportRef.current,
+ };
+
+ const last = lastCloudSaveRef.current;
+ if (
+ last &&
+ last.nodes === currentSnapshot.nodes &&
+ last.connections === currentSnapshot.connections &&
+ last.backgroundMode === currentSnapshot.backgroundMode &&
+ last.showImageInfo === currentSnapshot.showImageInfo &&
+ last.viewport === currentSnapshot.viewport
+ ) {
+ setCloudSaveStatus("saved");
+ return;
+ }
+
+ if (cloudSaveInFlightRef.current) return;
+ cloudSaveInFlightRef.current = true;
+ setCloudSaveStatus("saving");
+
+ const canvasData: CanvasProject = {
+ id: projectId,
+ title: currentProject?.title || "Untitled",
+ createdAt: currentProject?.createdAt || new Date().toISOString(),
+ updatedAt: new Date().toISOString(),
+ nodes: currentSnapshot.nodes,
+ connections: currentSnapshot.connections,
+ backgroundMode: currentSnapshot.backgroundMode,
+ showImageInfo: currentSnapshot.showImageInfo,
+ viewport: currentSnapshot.viewport,
+ };
+
+ saveCanvas(projectId, canvasData).then((result) => {
+ cloudSaveInFlightRef.current = false;
+ if ("error" in result && result.error) {
+ setCloudSaveStatus("error");
+ } else {
+ lastCloudSaveRef.current = currentSnapshot;
+ setCloudSaveStatus("saved");
+ }
+ }).catch(() => {
+ cloudSaveInFlightRef.current = false;
+ setCloudSaveStatus("error");
+ });
+ }, CLOUD_SAVE_DELAY);
+
+ return () => {
+ if (cloudSaveTimerRef.current) {
+ clearTimeout(cloudSaveTimerRef.current);
+ cloudSaveTimerRef.current = null;
+ }
+ };
+ }, [nodes, connections, backgroundMode, showImageInfo, viewport, projectLoaded, projectId, currentProject]);
 
  useLayoutEffect(() => {
  nodesRef.current = nodes;
@@ -3309,6 +3459,8 @@ function InfiniteCanvasPage() {
  onImportImage={() => handleUploadRequest()}
  onUndo={undoCanvas}
  onRedo={redoCanvas}
+ cloudSaveStatus={cloudSaveStatus}
+ cloudLoadError={cloudLoadError}
  />
 
  <InfiniteCanvas

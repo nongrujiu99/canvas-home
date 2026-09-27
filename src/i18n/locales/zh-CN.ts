@@ -238,6 +238,7 @@ export default {
         resetView: "重置视图",
         zoom: "放大/缩小画布",
         connecting: "连接中",
+        cloudSave: { unsaved: "未保存", saving: "正在保存...", saved: "已保存", error: "保存失败", loading: "加载中...", loadError: "加载失败" },
         nodeTypes: { image: "图片", text: "文本", config: "生成配置", video: "视频", audio: "音频", group: "组", operation: "处理操作" },
         toolbar: {
             select: "选择", pan: "移动", text: "文本", image: "图片", video: "视频", audio: "音频", config: "生成配置", group: "组", upload: "上传资产", appearance: "画布外观", clear: "清空画布",

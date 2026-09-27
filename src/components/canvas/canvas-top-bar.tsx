@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Download, Home, Images, Menu, PanelLeftClose, PanelLeftOpen, Plus, Redo2, Trash2, Undo2, Upload } from "lucide-react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import { Cloud, CloudOff, Download, Home, Images, Loader2, Menu, PanelLeftClose, PanelLeftOpen, Plus, Redo2, Trash2, Undo2, Upload } from "lucide-react";
 import { Button, Dropdown, Modal, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
 
@@ -7,6 +7,8 @@ import { UserStatusActions } from "@/components/layout/user-status-actions";
 import { canvasThemes } from "@/lib/canvas-theme";
 import { useCanvasSidePanelStore } from "@/stores/use-canvas-side-panel-store";
 import { useThemeStore } from "@/stores/use-theme-store";
+
+type CloudSaveStatus = "idle" | "loading" | "ready" | "unsaved" | "saving" | "saved" | "error";
 
 export function CanvasTopBar({
  title,
@@ -26,6 +28,8 @@ export function CanvasTopBar({
  onImportImage,
  onUndo,
  onRedo,
+ cloudSaveStatus,
+ cloudLoadError,
 }: {
  title: string;
  titleDraft: string;
@@ -44,6 +48,8 @@ export function CanvasTopBar({
  onImportImage: () => void;
  onUndo: () => void;
  onRedo: () => void;
+ cloudSaveStatus?: CloudSaveStatus;
+ cloudLoadError?: string | null;
 }) {
  const colorTheme = useThemeStore((state) => state.theme);
  const { t } = useTranslation();
@@ -125,6 +131,9 @@ export function CanvasTopBar({
  </button>
  )}
  </div>
+ {cloudSaveStatus && cloudSaveStatus !== "idle" && cloudSaveStatus !== "ready" && (
+  <CloudSaveIndicator status={cloudSaveStatus} error={cloudLoadError} theme={theme} t={t} />
+ )}
  </div>
 
  <div className="pointer-events-auto flex items-center gap-1.5">
@@ -181,5 +190,23 @@ function Shortcut({ keys, value, theme }: { keys: string[]; value: string; theme
  </span>
  <span className="text-right text-sm opacity-55">{value}</span>
  </div>
+ );
+}
+
+function CloudSaveIndicator({ status, error, theme, t }: { status: CloudSaveStatus; error?: string | null; theme: (typeof canvasThemes)[keyof typeof canvasThemes]; t: (key: string) => string }) {
+ const config: Record<string, { label: string; icon: ReactNode; opacity: string }> = {
+  loading: { label: t("canvas.cloudSave.loading"), icon: <Loader2 className="size-3 animate-spin" />, opacity: "0.5" },
+  unsaved: { label: t("canvas.cloudSave.unsaved"), icon: <CloudOff className="size-3" />, opacity: "0.45" },
+  saving: { label: t("canvas.cloudSave.saving"), icon: <Cloud className="size-3" />, opacity: "0.5" },
+  saved: { label: t("canvas.cloudSave.saved"), icon: <Cloud className="size-3" />, opacity: "0.35" },
+  error: { label: error || t("canvas.cloudSave.error"), icon: <CloudOff className="size-3" />, opacity: "0.7" },
+ };
+ const item = config[status];
+ if (!item) return null;
+ return (
+  <span className="flex items-center gap-1 text-xs" style={{ color: theme.node.text, opacity: item.opacity }}>
+   {item.icon}
+   <span>{item.label}</span>
+  </span>
  );
 }

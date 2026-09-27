@@ -238,6 +238,7 @@ export default {
         resetView: "Reset view",
         zoom: "Zoom canvas",
         connecting: "Connecting",
+        cloudSave: { unsaved: "Unsaved", saving: "Saving...", saved: "Saved", error: "Save failed", loading: "Loading...", loadError: "Load failed" },
         nodeTypes: { image: "Image", text: "Text", config: "Generation config", video: "Video", audio: "Audio", group: "Group", operation: "Processing operation" },
         toolbar: {
             select: "Select", pan: "Move", text: "Text", image: "Image", video: "Video", audio: "Audio", config: "Generation config", group: "Group", upload: "Upload assets", appearance: "Canvas appearance", clear: "Clear canvas",

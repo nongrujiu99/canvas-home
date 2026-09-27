@@ -30,6 +30,7 @@ type CanvasStore = {
     deletedProjects: CanvasDeletedProject[];
     createProject: (title?: string) => string;
     importProject: (project: Partial<CanvasProject>) => string;
+    upsertProject: (project: CanvasProject) => void;
     openProject: (id: string) => CanvasProject | null;
     renameProject: (id: string, title: string) => void;
     deleteProjects: (ids: string[]) => void;
@@ -103,6 +104,16 @@ export const useCanvasStore = create<CanvasStore>()(
                 set((state) => ({ projects: [project, ...state.projects] }));
                 return project.id;
             },
+            upsertProject: (project) =>
+                set((state) => {
+                    const existingIndex = state.projects.findIndex((p) => p.id === project.id);
+                    if (existingIndex >= 0) {
+                        const projects = [...state.projects];
+                        projects[existingIndex] = project;
+                        return { projects };
+                    }
+                    return { projects: [project, ...state.projects] };
+                }),
             openProject: (id) => {
                 return get().projects.find((item) => item.id === id) || null;
             },
