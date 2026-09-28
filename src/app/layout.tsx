@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { Suspense } from "react";
-import Script from "next/script";
 
 import "antd/dist/reset.css";
 import "@/styles/globals.css";
@@ -16,12 +15,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <meta name="description" content="一个无限画布创作工具" />
                 <link rel="icon" href="/logo.svg" />
                 <title>无限画布</title>
-                <Script id="theme-init" strategy="beforeInteractive">
-                    {`try{var s=JSON.parse(localStorage.getItem("infinite-canvas:theme_store")||"{}");var t=s.state&&s.state.theme==="light"?"light":"dark";document.documentElement.classList.toggle("dark",t==="dark");document.documentElement.style.colorScheme=t;}catch(e){}`}
-                </Script>
-                <Script id="runtime-config" strategy="beforeInteractive">
-                    {"window.__RUNTIME_CONFIG__=window.__RUNTIME_CONFIG__||{};"}
-                </Script>
+                <script
+                    id="theme-init"
+                    dangerouslySetInnerHTML={{
+                        __html: `try{var s=JSON.parse(localStorage.getItem("infinite-canvas:theme_store")||"{}");var t=s.state&&s.state.theme==="light"?"light":"dark";document.documentElement.classList.toggle("dark",t==="dark");document.documentElement.style.colorScheme=t;}catch(e){}`,
+                    }}
+                />
+                <script
+                    id="runtime-config"
+                    dangerouslySetInnerHTML={{
+                        __html: "window.__RUNTIME_CONFIG__=window.__RUNTIME_CONFIG__||{};",
+                    }}
+                />
             </head>
             <body className="bg-background text-foreground antialiased">
                 <AppProviders>

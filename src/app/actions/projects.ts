@@ -117,6 +117,25 @@ export async function getCanvas(projectId: string) {
     return { data: { canvas_data: data.canvas_data, updated_at: data.updated_at } };
 }
 
+const VALID_BACKGROUNDS = new Set(["lines", "dots", "blank"]);
+
+function validateCanvasProject(data: unknown, projectId: string): string | null {
+    if (!data || typeof data !== "object") return "canvasData 不是对象";
+    const d = data as Record<string, unknown>;
+    if (typeof d.id !== "string" || d.id !== projectId) return "canvasData.id 与 projectId 不一致";
+    if (typeof d.title !== "string") return "title 缺失或非字符串";
+    if (typeof d.createdAt !== "string") return "createdAt 缺失或非字符串";
+    if (typeof d.updatedAt !== "string") return "updatedAt 缺失或非字符串";
+    if (!Array.isArray(d.nodes)) return "nodes 缺失或非数组";
+    if (!Array.isArray(d.connections)) return "connections 缺失或非数组";
+    if (typeof d.backgroundMode !== "string" || !VALID_BACKGROUNDS.has(d.backgroundMode)) return "backgroundMode 非法";
+    if (typeof d.showImageInfo !== "boolean") return "showImageInfo 缺失或非布尔";
+    const vp = d.viewport as Record<string, unknown> | undefined;
+    if (!vp || typeof vp !== "object") return "viewport 缺失";
+    if (typeof vp.x !== "number" || typeof vp.y !== "number" || typeof vp.k !== "number") return "viewport.x/y/k 必须为数字";
+    return null;
+}
+
 export async function saveCanvas(projectId: string, canvasData: unknown) {
     const supabase = await createClient();
 
@@ -126,6 +145,22 @@ export async function saveCanvas(projectId: string, canvasData: unknown) {
 
     if (!user) {
         return { error: "未登录" };
+    }
+
+    const validationError = validateCanvasProject(canvasData, projectId);
+    if (validationError) {
+        return { error: validationError };
+    }
+
+    const { data: project } = await (supabase
+        .from("projects") as any)
+        .select("id")
+        .eq("id", projectId)
+        .eq("owner_id", user.id)
+        .single();
+
+    if (!project) {
+        return { error: "项目不存在或无权限" };
     }
 
     const { error: canvasError } = await (supabase
